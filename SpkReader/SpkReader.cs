@@ -91,7 +91,7 @@ public class SpkReader
         return keyValues;
     }
 
-    private IEnumerable<string> ReadFiles(Stream stream)
+    private static IEnumerable<string> ReadFiles(Stream stream)
     {
         using var gzipStream = new GZipStream(stream, CompressionMode.Decompress);
         using var tarReader = new TarReader(gzipStream);
@@ -103,5 +103,12 @@ public class SpkReader
 
             yield return tarEntry.Name;
         }
+    }
+
+    public static (IReadOnlyDictionary<string, object>? Info, IReadOnlyDictionary<string, byte[]> Icons) ReadPackageInfo(Stream spkStream)
+    {
+        var spkReader = new SpkReader(spkStream);
+        var (info, icons, _) = spkReader.Read(readFiles: false);
+        return (info, icons);
     }
 }
