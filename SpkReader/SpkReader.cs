@@ -44,8 +44,7 @@ public class SpkReader
                     files = ReadFiles(tarEntry.DataStream).ToImmutableArray();
                     break;
                 default:
-                    if (readIcons && tarEntry.Name.StartsWith("PACKAGE_ICON", StringComparison.InvariantCultureIgnoreCase) && tarEntry.Name.EndsWith(".PNG", StringComparison.InvariantCultureIgnoreCase))
-                        icons[tarEntry.Name] = GetData(tarEntry.DataStream);
+                    GetPackageIcon(readIcons, tarEntry, icons);
                     break;
             }
 
@@ -53,11 +52,22 @@ public class SpkReader
                 return (info, icons, files);
         }
 
-        if (!HasInfo())
-            throw new FormatException("No INFO found");
-        if (!HasFiles())
-            throw new FormatException("No package.tgz found");
+        CheckErrors(HasInfo, HasFiles);
         return (info, icons, files);
+    }
+
+    private void GetPackageIcon(bool readIcons, TarEntry tarEntry, IDictionary<string, byte[]> icons)
+    {
+        if (readIcons && tarEntry.Name.StartsWith("PACKAGE_ICON", StringComparison.InvariantCultureIgnoreCase) && tarEntry.Name.EndsWith(".PNG", StringComparison.InvariantCultureIgnoreCase))
+            icons[tarEntry.Name] = GetData(tarEntry.DataStream!);
+    }
+
+    private static void CheckErrors(Func<bool> hasInfo, Func<bool> hasFiles)
+    {
+        if (!hasInfo())
+            throw new FormatException("No INFO found");
+        if (!hasFiles())
+            throw new FormatException("No package.tgz found");
     }
 
     private byte[] GetData(Stream stream)
